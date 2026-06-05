@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:welinked/features/status/presentation/providers/status_providers.dart';
 import 'package:welinked/core/utils/date_utils.dart';
 import 'package:welinked/shared/widgets/loading_widget.dart';
@@ -14,7 +14,18 @@ class LocationScreen extends ConsumerStatefulWidget {
 }
 
 class _LocationScreenState extends ConsumerState<LocationScreen> {
-  GoogleMapController? _mapController;
+  Future<void> _openGoogleMaps(double latitude, double longitude) async {
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open maps: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,94 +76,113 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             );
           }
 
-          final position = LatLng(partner.latitude!, partner.longitude!);
           final lastUpdatedStr = partner.locationUpdatedAt != null
               ? AppDateUtils.relativeTime(partner.locationUpdatedAt!)
               : 'Unknown';
 
-          final markers = {
-            Marker(
-              markerId: MarkerId(partner.uid),
-              position: position,
-              infoWindow: InfoWindow(
-                title: partner.name,
-                snippet: 'Battery: ${partner.batteryPercentage}% | Last updated: $lastUpdatedStr',
-              ),
-            ),
-          };
-
-          // Auto center map on partner location update
-          if (_mapController != null) {
-            _mapController!.animateCamera(CameraUpdate.newLatLng(position));
-          }
-
-          return Stack(
-            children: [
-              GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: position,
-                  zoom: 15.0,
-                ),
-                markers: markers,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                },
-              ),
-              Positioned(
-                bottom: 24,
-                left: 16,
-                right: 16,
-                child: Card(
-                  elevation: 6,
-                  color: theme.cardColor,
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                // Location Header card
+                Card(
+                  elevation: 0,
+                  color: theme.colorScheme.surfaceContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
                       children: [
-                        Icon(
-                          Icons.my_location_rounded,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "${partner.name}'s Location",
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Last updated: $lastUpdatedStr',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.my_location_rounded,
+                            size: 48,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
-                        IconButton.filledTonal(
-                          onPressed: () {
-                            if (_mapController != null) {
-                              _mapController!.animateCamera(
-                                CameraUpdate.newLatLngZoom(position, 15.5),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.center_focus_strong_rounded),
+                        const SizedBox(height: 16),
+                        Text(
+                          partner.name,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Last updated: $lastUpdatedStr',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                // Coordinates display card
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    side: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Telemetry Coordinates',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const Divider(height: 24),
+                        _buildCoordinateRow(
+                          label: 'Latitude',
+                          value: partner.latitude!.toStringAsFixed(6),
+                          icon: Icons.explore_outlined,
+                          theme: theme,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildCoordinateRow(
+                          label: 'Longitude',
+                          value: partner.longitude!.toStringAsFixed(6),
+                          icon: Icons.explore_rounded,
+                          theme: theme,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Maps redirection action
+                ElevatedButton.icon(
+                  onPressed: () => _openGoogleMaps(partner.latitude!, partner.longitude!),
+                  icon: const Icon(Icons.map_rounded),
+                  label: const Text('Open in Google Maps'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           );
         },
         loading: () => const AppLoadingWidget(message: 'Locating partner...'),
@@ -160,6 +190,39 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           message: 'Failed to access location details: $err',
         ),
       ),
+    );
+  }
+
+  Widget _buildCoordinateRow({
+    required String label,
+    required String value,
+    required IconData icon,
+    required ThemeData theme,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+            Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
