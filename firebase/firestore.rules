@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User profile matching rules
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId || 
+        resource.data.partnerUid == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.partnerUid == userId
+      );
+      allow update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Settings matching rules
+    match /settings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // PairRequests matching rules
+    match /pairRequests/{requestId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.fromUid;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.fromUid || 
+        request.auth.token.email == resource.data.toEmail ||
+        request.auth.uid == resource.data.toUid
+      );
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.fromUid || 
+        request.auth.uid == resource.data.toUid
+      );
+    }
+
+    // Alerts matching rules
+    match /alerts/{alertId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.senderUid;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.senderUid || 
+        request.auth.uid == resource.data.receiverUid
+      );
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.senderUid || 
+        request.auth.uid == resource.data.receiverUid
+      );
+    }
+  }
+}
