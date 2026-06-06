@@ -19,7 +19,7 @@ class AlertCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSentByMe = alert.senderUid == currentUid;
-    
+
     // Status text & colors
     final isDelivered = alert.deliveredAt != null;
     final isSeen = alert.seenAt != null;
@@ -64,14 +64,14 @@ class AlertCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 8,
-                  color: alert.alertType.color,
-                ),
+                Container(width: 8, color: alert.alertType.color),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 8,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -89,18 +89,22 @@ class AlertCard extends StatelessWidget {
                             Text(
                               relativeTime,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          isSentByMe 
-                              ? 'You sent this alert' 
-                              : 'Your partner sent this alert',
+                          isSentByMe
+                              ? 'You sent this alert'
+                              : 'Your duo sent this alert',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.8,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -119,25 +123,33 @@ class AlertCard extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            if (isAcknowledged && alert.acknowledgedAt != null) ...[
+                            if (isAcknowledged &&
+                                alert.acknowledgedAt != null) ...[
                               Text(
                                 ' at ${AppDateUtils.formatTime(alert.acknowledgedAt!)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                               ),
                             ] else if (isSeen && alert.seenAt != null) ...[
                               Text(
                                 ' at ${AppDateUtils.formatTime(alert.seenAt!)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                               ),
-                            ] else if (isDelivered && alert.deliveredAt != null) ...[
+                            ] else if (isDelivered &&
+                                alert.deliveredAt != null) ...[
                               Text(
                                 ' at ${AppDateUtils.formatTime(alert.deliveredAt!)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                               ),
                             ],

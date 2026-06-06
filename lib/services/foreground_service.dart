@@ -176,7 +176,7 @@ class ForegroundServiceManager {
       await FlutterForegroundTask.restartService();
     } else {
       await FlutterForegroundTask.startService(
-        notificationTitle: 'Node Active',
+        notificationTitle: 'WL Active',
         notificationText: 'Everything is Good.',
         callback: startCallback,
       );

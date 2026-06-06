@@ -26,12 +26,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    ref.read(authControllerProvider).login(
+    ref
+        .read(authControllerProvider)
+        .login(
           _emailController.text,
           _passwordController.text,
           onError: (error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error),
+              SnackBar(
+                content: Text(error),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
             );
           },
         );
@@ -69,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sign in to stay connected with your partner.',
+                    'Sign in to stay connected with your duo.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -85,8 +90,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (val) {
-                      if (val == null || val.isEmpty) return 'Enter email address';
-                      if (!val.contains('@')) return 'Enter valid email address';
+                      if (val == null || val.isEmpty) {
+                        return 'Enter email address';
+                      }
+                      if (!val.contains('@')) {
+                        return 'Enter valid email address';
+                      }
                       return null;
                     },
                   ),
@@ -101,7 +110,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                         ),
                         onPressed: () {
                           setState(() {
@@ -111,8 +122,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     validator: (val) {
-                      if (val == null || val.isEmpty) return 'Enter password';
-                      if (val.length < 6) return 'Password must be at least 6 characters';
+                      if (val == null || val.isEmpty) {
+                        return 'Enter password';
+                      }
+                      if (val.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
                       return null;
                     },
                   ),
@@ -123,7 +138,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Text('Sign In'),
                   ),
@@ -133,7 +151,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       Text(
                         "Don't have an account? ",
-                        style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => context.go('/register'),

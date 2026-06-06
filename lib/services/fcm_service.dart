@@ -14,8 +14,9 @@ import 'package:welinked/features/auth/presentation/providers/auth_providers.dar
 
 class FcmService {
   final Ref _ref;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   // Track processed alert IDs to prevent duplicate sound/vibration/notification triggers
   final Set<String> _processedAlertIds = {};
   final Set<String> _notifiedAckAlertIds = {};
@@ -24,7 +25,9 @@ class FcmService {
 
   Future<void> initialize() async {
     // 1. Initialize local notifications
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const initSettings = InitializationSettings(android: androidSettings);
     await _localNotifications.initialize(
       settings: initSettings,
@@ -41,7 +44,10 @@ class FcmService {
   }
 
   void _setupClientSideListener() {
-    _ref.listen<AsyncValue<List<AlertModel>>>(activeAlertsProvider, (prevAlerts, nextAlerts) {
+    _ref.listen<AsyncValue<List<AlertModel>>>(activeAlertsProvider, (
+      prevAlerts,
+      nextAlerts,
+    ) {
       final user = _ref.read(currentUserStreamProvider).value;
       if (user == null) return;
 
@@ -50,14 +56,16 @@ class FcmService {
 
       for (final alert in alerts) {
         // Case A: Incoming alert from partner in 'created' state
-        if (alert.receiverUid == user.uid && alert.status == AlertStatus.created) {
+        if (alert.receiverUid == user.uid &&
+            alert.status == AlertStatus.created) {
           if (_processedAlertIds.add(alert.alertId)) {
             _triggerIncomingAlert(alert);
           }
         }
 
         // Case B: Outgoing alert sent by us which is acknowledged by partner
-        if (alert.senderUid == user.uid && alert.status == AlertStatus.acknowledged) {
+        if (alert.senderUid == user.uid &&
+            alert.status == AlertStatus.acknowledged) {
           if (_notifiedAckAlertIds.add(alert.alertId)) {
             _triggerAcknowledgementNotification(alert);
           }
@@ -68,7 +76,9 @@ class FcmService {
 
   void _triggerIncomingAlert(AlertModel alert) async {
     // 1. Mark as delivered in Firestore
-    await _ref.read(alertControllerProvider).markSeen(alert.alertId); // Mark seen/delivered
+    await _ref
+        .read(alertControllerProvider)
+        .markSeen(alert.alertId); // Mark seen/delivered
 
     // 2. Trigger local notification
     await _showLocalNotification(
@@ -91,12 +101,13 @@ class FcmService {
         .collection('users')
         .doc(alert.receiverUid)
         .get();
-    final partnerName = senderDoc.data()?['name'] ?? 'Partner';
+    final partnerName = senderDoc.data()?['name'] ?? 'Duo';
 
     await _showLocalNotification(
       id: alert.alertId.hashCode + 1,
       title: 'Alert Acknowledged!',
-      body: '$partnerName acknowledged your ${alert.alertType.name.toUpperCase()} alert.',
+      body:
+          '$partnerName acknowledged your ${alert.alertType.name.toUpperCase()} alert.',
       payload: jsonEncode({'alertId': alert.alertId}),
       channelId: AppConstants.ackChannelId,
       channelName: AppConstants.ackChannelName,
@@ -120,17 +131,15 @@ class FcmService {
         .collection('users')
         .doc(alert.senderUid)
         .get();
-    final senderName = senderDoc.data()?['name'] ?? 'Partner';
+    final senderName = senderDoc.data()?['name'] ?? 'Duo';
 
     final context = rootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (context) => FullScreenAlertScreen(
-            alert: alert,
-            senderName: senderName,
-          ),
+          builder: (context) =>
+              FullScreenAlertScreen(alert: alert, senderName: senderName),
         ),
       );
     }

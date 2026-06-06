@@ -23,20 +23,25 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
   void _sendRequest() {
     if (!_formKey.currentState!.validate()) return;
 
-    ref.read(pairingControllerProvider).sendRequest(
-      _emailController.text,
-      onSuccess: () {
-        _emailController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Partner request sent!')),
+    ref
+        .read(pairingControllerProvider)
+        .sendRequest(
+          _emailController.text,
+          onSuccess: () {
+            _emailController.clear();
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Duo request sent!')));
+          },
+          onError: (error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          },
         );
-      },
-      onError: (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error),
-        );
-      },
-    );
   }
 
   @override
@@ -47,9 +52,7 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
     final outgoingRequests = ref.watch(outgoingRequestsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Connect with Partner'),
-      ),
+      appBar: AppBar(title: const Text('Connect with Duo')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -65,13 +68,17 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                     children: [
                       Text(
                         'Send Connection Request',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Enter your partner's registered email address to send a link request.",
+                        "Enter your Duo registered email address to send a link request.",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -79,12 +86,16 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: "Partner's Email",
+                          labelText: "Duo Email",
                           prefixIcon: Icon(Icons.person_add_outlined),
                         ),
                         validator: (val) {
-                          if (val == null || val.isEmpty) return "Enter partner's email";
-                          if (!val.contains('@')) return 'Enter a valid email';
+                          if (val == null || val.isEmpty) {
+                            return "Enter Duo email";
+                          }
+                          if (!val.contains('@')) {
+                            return 'Enter a valid email';
+                          }
                           return null;
                         },
                       ),
@@ -95,7 +106,10 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Text('Send Link Request'),
                       ),
@@ -107,7 +121,9 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
             const SizedBox(height: 24),
             Text(
               'Incoming Requests',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             incomingRequests.when(
@@ -116,9 +132,11 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(
-                      'No pending requests. Ask your partner to send a request.',
+                      'No pending requests. Ask your Duo to send a request.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -139,18 +157,29 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                           onPressed: isActionLoading
                               ? null
                               : () {
-                                  ref.read(pairingControllerProvider).acceptRequest(
+                                  ref
+                                      .read(pairingControllerProvider)
+                                      .acceptRequest(
                                         req,
                                         onSuccess: () {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Successfully paired!')),
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Successfully paired!',
+                                              ),
+                                            ),
                                           );
                                         },
                                         onError: (error) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text(error),
-                                              backgroundColor: theme.colorScheme.error,
+                                              backgroundColor:
+                                                  theme.colorScheme.error,
                                             ),
                                           );
                                         },
@@ -169,7 +198,9 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
             const SizedBox(height: 24),
             Text(
               'Sent Requests',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             outgoingRequests.when(
@@ -180,7 +211,9 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                     child: Text(
                       'No sent requests.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -196,7 +229,7 @@ class _PairingScreenState extends ConsumerState<PairingScreen> {
                       color: theme.colorScheme.surfaceContainer,
                       child: ListTile(
                         title: Text(req.toEmail),
-                        subtitle: const Text('Waiting for partner to accept...'),
+                        subtitle: const Text('Waiting for Duo to accept...'),
                         trailing: const SizedBox(
                           height: 20,
                           width: 20,

@@ -6,16 +6,20 @@ import 'package:welinked/features/pairing/domain/pair_request.dart';
 
 /// Stream incoming partner requests
 final incomingRequestsProvider = StreamProvider<List<PairRequest>>((ref) {
-  final user = ref.watch(currentUserStreamProvider).value;
-  if (user == null) return Stream.value([]);
-  return ref.watch(pairingRepositoryProvider).watchIncomingRequests(user.uid);
+  final uid = ref.watch(
+    currentUserStreamProvider.select((userAsync) => userAsync.value?.uid),
+  );
+  if (uid == null) return Stream.value([]);
+  return ref.watch(pairingRepositoryProvider).watchIncomingRequests(uid);
 });
 
 /// Stream outgoing partner requests
 final outgoingRequestsProvider = StreamProvider<List<PairRequest>>((ref) {
-  final user = ref.watch(currentUserStreamProvider).value;
-  if (user == null) return Stream.value([]);
-  return ref.watch(pairingRepositoryProvider).watchOutgoingRequests(user.uid);
+  final uid = ref.watch(
+    currentUserStreamProvider.select((userAsync) => userAsync.value?.uid),
+  );
+  if (uid == null) return Stream.value([]);
+  return ref.watch(pairingRepositoryProvider).watchOutgoingRequests(uid);
 });
 
 class PairingLoadingNotifier extends Notifier<bool> {

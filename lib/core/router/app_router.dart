@@ -14,13 +14,52 @@ import 'package:welinked/features/settings/presentation/screens/settings_screen.
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> shellNavigatorKey = GlobalKey<NavigatorState>();
 
+enum AuthRoutingState {
+  loading,
+  loggedOut,
+  unpaired,
+  paired,
+}
+
+final authRoutingStateProvider = Provider<AuthRoutingState>((ref) {
+  final userAsync = ref.watch(currentUserStreamProvider);
+  return userAsync.when(
+    data: (user) {
+      if (user == null) return AuthRoutingState.loggedOut;
+      return user.isPaired ? AuthRoutingState.paired : AuthRoutingState.unpaired;
+    },
+    error: (_, __) => AuthRoutingState.loggedOut,
+    loading: () => AuthRoutingState.loading,
+  );
+});
+
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AuthRoutingState>(
+      authRoutingStateProvider,
+      (previous, next) {
+        if (previous != next) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 /// Application routing layout. Automatically routes using reactive auth status.
 final routerProvider = Provider<GoRouter>((ref) {
-  final userAsync = ref.watch(currentUserStreamProvider);
+  final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    refreshListenable: notifier,
     routes: [
       GoRoute(
         path: '/splash',
@@ -62,23 +101,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      if (userAsync.isLoading) return null;
+      final routingState = ref.read(authRoutingStateProvider);
 
-      final user = userAsync.value;
+      if (routingState == AuthRoutingState.loading) {
+        return null;
+      }
+
       final loggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/register';
 
-      if (user == null) {
+      if (routingState == AuthRoutingState.loggedOut) {
         return loggingIn ? null : '/login';
       }
 
-      // User is logged in
-      if (!user.isPaired) {
+      if (routingState == AuthRoutingState.unpaired) {
         return '/pairing';
       }
 
       // Logged in and paired
-      if (loggingIn || state.matchedLocation == '/pairing' || state.matchedLocation == '/splash') {
-        return '/home';
+      if (routingState == AuthRoutingState.paired) {
+        if (loggingIn || state.matchedLocation == '/pairing' || state.matchedLocation == '/splash') {
+          return '/home';
+        }
       }
 
       return null;

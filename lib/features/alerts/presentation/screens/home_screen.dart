@@ -25,10 +25,9 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              partnerStatus.when(
-                data: (partner) => PartnerStatusCard(partner: partner),
-                loading: () => const PartnerStatusCard(partner: null),
-                error: (err, stack) => PartnerStatusCard(partner: null),
+              PartnerStatusCard(
+                partner: partnerStatus.hasValue ? partnerStatus.value : null,
+                isRefreshing: partnerStatus.isLoading,
               ),
               const SizedBox(height: 24),
               Text(

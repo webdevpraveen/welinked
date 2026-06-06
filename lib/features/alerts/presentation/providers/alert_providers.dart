@@ -7,9 +7,11 @@ import 'package:welinked/features/auth/presentation/providers/auth_providers.dar
 
 /// Stream of all active (non-archived) alerts involving the logged-in user.
 final activeAlertsProvider = StreamProvider<List<AlertModel>>((ref) {
-  final user = ref.watch(currentUserStreamProvider).value;
-  if (user == null) return Stream.value([]);
-  return ref.watch(alertRepositoryProvider).watchAllAlerts(user.uid);
+  final uid = ref.watch(
+    currentUserStreamProvider.select((userAsync) => userAsync.value?.uid),
+  );
+  if (uid == null) return Stream.value([]);
+  return ref.watch(alertRepositoryProvider).watchAllAlerts(uid);
 });
 
 /// Tracking button cooldowns per alert type. Map of AlertType to end timestamp.

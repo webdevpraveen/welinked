@@ -23,7 +23,7 @@ export const onAlertCreated = functions.firestore
     try {
       // 1. Fetch sender name
       const senderDoc = await db.collection("users").doc(senderUid).get();
-      const senderName = senderDoc.data()?.name || "Partner";
+      const senderName = senderDoc.data()?.name || "Duo";
 
       // 2. Fetch receiver fcmToken
       const receiverDoc = await db.collection("users").doc(receiverUid).get();
@@ -77,7 +77,7 @@ export const onAlertAcknowledged = functions.firestore
       try {
         // 1. Fetch receiver (acknowledger) name
         const receiverDoc = await db.collection("users").doc(receiverUid).get();
-        const receiverName = receiverDoc.data()?.name || "Partner";
+        const receiverName = receiverDoc.data()?.name || "Duo";
 
         // 2. Fetch sender (original alert creator) token
         const senderDoc = await db.collection("users").doc(senderUid).get();

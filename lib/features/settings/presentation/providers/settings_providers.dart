@@ -5,11 +5,13 @@ import 'package:welinked/features/settings/domain/alert_settings.dart';
 
 /// Stream of current settings
 final alertSettingsProvider = StreamProvider<AlertSettings>((ref) {
-  final user = ref.watch(currentUserStreamProvider).value;
-  if (user == null) {
+  final uid = ref.watch(
+    currentUserStreamProvider.select((userAsync) => userAsync.value?.uid),
+  );
+  if (uid == null) {
     return Stream.value(AlertSettings.defaults());
   }
-  return ref.watch(settingsRepositoryProvider).watchSettings(user.uid);
+  return ref.watch(settingsRepositoryProvider).watchSettings(uid);
 });
 
 class SettingsController {

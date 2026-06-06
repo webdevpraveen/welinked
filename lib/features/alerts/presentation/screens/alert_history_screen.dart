@@ -13,7 +13,7 @@ class AlertHistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final user = ref.watch(currentUserStreamProvider).value;
+    final uid = ref.watch(currentUserStreamProvider.select((u) => u.value?.uid));
     final activeAlerts = ref.watch(activeAlertsProvider);
     final controller = ref.read(alertControllerProvider);
 
@@ -22,7 +22,7 @@ class AlertHistoryScreen extends ConsumerWidget {
         title: const Text('Alert History'),
       ),
       body: SafeArea(
-        child: user == null
+        child: uid == null
             ? const AppLoadingWidget(message: 'Loading user details...')
             : activeAlerts.when(
                 data: (alerts) {
@@ -67,13 +67,13 @@ class AlertHistoryScreen extends ConsumerWidget {
                       final alert = alerts[index];
                       
                       // Auto-mark received alerts as seen when history is opened
-                      if (alert.receiverUid == user.uid && alert.status == AlertStatus.delivered) {
+                      if (alert.receiverUid == uid && alert.status == AlertStatus.delivered) {
                         controller.markSeen(alert.alertId);
                       }
 
                       return AlertCard(
                         alert: alert,
-                        currentUid: user.uid,
+                        currentUid: uid,
                         onSwipe: () {
                           controller.archive(alert.alertId);
                           ScaffoldMessenger.of(context).showSnackBar(

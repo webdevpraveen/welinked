@@ -8,8 +8,8 @@ class AppConstants {
 
   // Background service intervals (in seconds)
   static const int locationSyncIntervalSeconds = 300; // 5 minutes
-  static const int statusSyncIntervalSeconds = 120;   // 2 minutes
-  static const int heartbeatIntervalSeconds = 60;     // 1 minute
+  static const int statusSyncIntervalSeconds = 120; // 2 minutes
+  static const int heartbeatIntervalSeconds = 60; // 1 minute
 
   // Location thresholds
   static const double locationMovementThresholdMeters = 50.0;
@@ -17,15 +17,18 @@ class AppConstants {
   // Notification channel IDs
   static const String alertChannelId = 'welinked_alerts';
   static const String alertChannelName = 'WeLinked Alerts';
-  static const String alertChannelDescription = 'High priority alert notifications from your partner';
+  static const String alertChannelDescription =
+      'High priority alert notifications from your duo';
 
   static const String serviceChannelId = 'welinked_service';
   static const String serviceChannelName = 'Background Service';
-  static const String serviceChannelDescription = 'WeLinked background service for location and status updates';
+  static const String serviceChannelDescription =
+      'WeLinked background service for location and status updates';
 
   static const String ackChannelId = 'welinked_ack';
   static const String ackChannelName = 'Acknowledgement Notifications';
-  static const String ackChannelDescription = 'Notifications when your partner acknowledges alerts';
+  static const String ackChannelDescription =
+      'Notifications when your duo acknowledges alerts';
 
   // App info
   static const String appName = 'WeLinked';
