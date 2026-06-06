@@ -158,7 +158,9 @@ class ForegroundServiceManager {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000), // Repeat every 5 seconds
+        eventAction: ForegroundTaskEventAction.repeat(
+          5000,
+        ), // Repeat every 5 seconds
         autoRunOnBoot: true,
         allowWakeLock: true,
         allowWifiLock: true,
@@ -174,8 +176,8 @@ class ForegroundServiceManager {
       await FlutterForegroundTask.restartService();
     } else {
       await FlutterForegroundTask.startService(
-        notificationTitle: 'WeLinked Active',
-        notificationText: 'Sharing background statuses with your partner.',
+        notificationTitle: 'Node Active',
+        notificationText: 'Everything is Good.',
         callback: startCallback,
       );
     }
