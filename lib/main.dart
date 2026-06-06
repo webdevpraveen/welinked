@@ -7,10 +7,13 @@ import 'package:welinked/app.dart';
 import 'package:welinked/features/auth/presentation/providers/auth_providers.dart';
 import 'package:welinked/services/fcm_service.dart';
 import 'package:welinked/services/foreground_service.dart';
+import 'package:welinked/firebase_options.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   // Handle background message if needed.
 }
 
@@ -18,7 +21,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // 1. Initialize Firebase
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // 2. Set background messaging handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);

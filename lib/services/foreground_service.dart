@@ -2,6 +2,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:welinked/core/constants/app_constants.dart';
+import 'package:welinked/firebase_options.dart';
 import 'package:welinked/services/battery_service.dart';
 import 'package:welinked/services/location_service.dart';
 import 'package:welinked/services/network_service.dart';
@@ -28,7 +29,9 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
 
     try {
       if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp();
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
       }
     } catch (e) {
       // Firebase initialization in background isolate handled safely
