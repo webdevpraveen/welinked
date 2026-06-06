@@ -6,15 +6,15 @@
       "fields": [
         {
           "fieldPath": "receiverUid",
-          "order": "ASC"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "isArchived",
-          "order": "ASC"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
-          "order": "DESC"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -24,15 +24,15 @@
       "fields": [
         {
           "fieldPath": "senderUid",
-          "order": "ASC"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "isArchived",
-          "order": "ASC"
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
-          "order": "DESC"
+          "order": "DESCENDING"
         }
       ]
     }

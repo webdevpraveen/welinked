@@ -1,45 +1,29 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:welinked/core/constants/app_constants.dart';
+import 'package:welinked/core/constants/alert_constants.dart';
 import 'package:welinked/core/router/app_router.dart';
 import 'package:welinked/features/alerts/data/alert_repository.dart';
+import 'package:welinked/features/alerts/domain/alert_model.dart';
+import 'package:welinked/features/alerts/presentation/providers/alert_providers.dart';
 import 'package:welinked/features/alerts/presentation/screens/full_screen_alert_screen.dart';
-import 'package:welinked/features/auth/data/auth_repository.dart';
-import 'package:welinked/shared/providers/firebase_providers.dart';
-
-/// Background message handler for FCM. Must be top-level.
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Just log or handle data. The Android Native BootReceiver and ForegroundService
-  // handle waking the app.
-}
+import 'package:welinked/features/auth/presentation/providers/auth_providers.dart';
 
 class FcmService {
-  final FirebaseMessaging _fcm;
-  final AuthRepository _authRepo;
-  final AlertRepository _alertRepo;
-
+  final Ref _ref;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  
+  // Track processed alert IDs to prevent duplicate sound/vibration/notification triggers
+  final Set<String> _processedAlertIds = {};
+  final Set<String> _notifiedAckAlertIds = {};
 
-  FcmService(this._fcm, this._authRepo, this._alertRepo);
+  FcmService(this._ref);
 
   Future<void> initialize() async {
-    // 1. Request notifications permission
-    await _fcm.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: true,
-      provisional: false,
-      sound: true,
-    );
-
-    // 2. Initialize local notifications
+    // 1. Initialize local notifications
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
     await _localNotifications.initialize(
@@ -52,59 +36,72 @@ class FcmService {
       },
     );
 
-    // 3. Register token updates
-    _setupTokenSync();
-
-    // 4. Foreground listener
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _handleForegroundMessage(message);
-    });
-
-    // 5. App opened from background notification tap listener
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationTap(message);
-    });
-
-    // 6. Check if app was opened from terminated state by notification tap
-    final initialMessage = await _fcm.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationTap(initialMessage);
-    }
+    // 2. Start client-side Firestore listeners for alerts when authenticated
+    _setupClientSideListener();
   }
 
-  Future<void> _setupTokenSync() async {
-    final token = await _fcm.getToken();
-    if (token != null) {
-      await _authRepo.updateFcmToken(token);
-    }
+  void _setupClientSideListener() {
+    _ref.listen<AsyncValue<List<AlertModel>>>(activeAlertsProvider, (prevAlerts, nextAlerts) {
+      final user = _ref.read(currentUserStreamProvider).value;
+      if (user == null) return;
 
-    _fcm.onTokenRefresh.listen((newToken) async {
-      await _authRepo.updateFcmToken(newToken);
-    });
-  }
+      final alerts = nextAlerts.value;
+      if (alerts == null) return;
 
-  void _handleForegroundMessage(RemoteMessage message) {
-    final data = message.data;
-    final alertId = data['alertId'];
+      for (final alert in alerts) {
+        // Case A: Incoming alert from partner in 'created' state
+        if (alert.receiverUid == user.uid && alert.status == AlertStatus.created) {
+          if (_processedAlertIds.add(alert.alertId)) {
+            _triggerIncomingAlert(alert);
+          }
+        }
 
-    if (alertId != null) {
-      // It is a partner alert! Trigger Full Screen overlay immediately.
-      _launchAlertOverlay(alertId);
-    } else {
-      // Ordinary notification (e.g. acknowledgment)
-      final notification = message.notification;
-      if (notification != null) {
-        _showLocalNotification(
-          title: notification.title ?? 'WeLinked Notification',
-          body: notification.body ?? '',
-          payload: jsonEncode(data),
-        );
+        // Case B: Outgoing alert sent by us which is acknowledged by partner
+        if (alert.senderUid == user.uid && alert.status == AlertStatus.acknowledged) {
+          if (_notifiedAckAlertIds.add(alert.alertId)) {
+            _triggerAcknowledgementNotification(alert);
+          }
+        }
       }
-    }
+    });
   }
 
-  void _handleNotificationTap(RemoteMessage message) {
-    _handleMessagePayload(message.data);
+  void _triggerIncomingAlert(AlertModel alert) async {
+    // 1. Mark as delivered in Firestore
+    await _ref.read(alertControllerProvider).markSeen(alert.alertId); // Mark seen/delivered
+
+    // 2. Trigger local notification
+    await _showLocalNotification(
+      id: alert.alertId.hashCode,
+      title: '${alert.alertType.title} RECEIVED!',
+      body: 'Tap to view attention alert.',
+      payload: jsonEncode({'alertId': alert.alertId}),
+      channelId: AppConstants.alertChannelId,
+      channelName: AppConstants.alertChannelName,
+      channelDescription: AppConstants.alertChannelDescription,
+    );
+
+    // 3. Launch full screen overlay immediately (if app context is available)
+    _launchAlertOverlay(alert.alertId);
+  }
+
+  void _triggerAcknowledgementNotification(AlertModel alert) async {
+    // Fetch partner name
+    final senderDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(alert.receiverUid)
+        .get();
+    final partnerName = senderDoc.data()?['name'] ?? 'Partner';
+
+    await _showLocalNotification(
+      id: alert.alertId.hashCode + 1,
+      title: 'Alert Acknowledged!',
+      body: '$partnerName acknowledged your ${alert.alertType.name.toUpperCase()} alert.',
+      payload: jsonEncode({'alertId': alert.alertId}),
+      channelId: AppConstants.ackChannelId,
+      channelName: AppConstants.ackChannelName,
+      channelDescription: AppConstants.ackChannelDescription,
+    );
   }
 
   void _handleMessagePayload(Map<String, dynamic> data) {
@@ -115,7 +112,7 @@ class FcmService {
   }
 
   void _launchAlertOverlay(String alertId) async {
-    final alert = await _alertRepo.getAlert(alertId);
+    final alert = await _ref.read(alertRepositoryProvider).getAlert(alertId);
     if (alert == null) return;
 
     // Fetch sender profile details to display their name
@@ -140,20 +137,25 @@ class FcmService {
   }
 
   Future<void> _showLocalNotification({
+    required int id,
     required String title,
     required String body,
     required String payload,
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
-      AppConstants.ackChannelId,
-      AppConstants.ackChannelName,
-      channelDescription: AppConstants.ackChannelDescription,
-      importance: Importance.high,
+    final androidDetails = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
+      importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
     );
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
     await _localNotifications.show(
-      id: 0,
+      id: id,
       title: title,
       body: body,
       notificationDetails: details,
@@ -163,9 +165,5 @@ class FcmService {
 }
 
 final fcmServiceProvider = Provider<FcmService>((ref) {
-  return FcmService(
-    ref.watch(firebaseMessagingProvider),
-    ref.watch(authRepositoryProvider),
-    ref.watch(alertRepositoryProvider),
-  );
+  return FcmService(ref);
 });

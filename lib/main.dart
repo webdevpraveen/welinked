@@ -8,6 +8,12 @@ import 'package:welinked/features/auth/presentation/providers/auth_providers.dar
 import 'package:welinked/services/fcm_service.dart';
 import 'package:welinked/services/foreground_service.dart';
 
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Handle background message if needed.
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
