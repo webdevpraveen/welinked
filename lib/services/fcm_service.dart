@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:welinked/features/alerts/data/alert_repository.dart';
 import 'package:welinked/features/alerts/domain/alert_model.dart';
 import 'package:welinked/features/alerts/presentation/providers/alert_providers.dart';
 import 'package:welinked/features/alerts/presentation/screens/full_screen_alert_screen.dart';
+import 'package:welinked/features/auth/data/auth_repository.dart';
 import 'package:welinked/features/auth/presentation/providers/auth_providers.dart';
 
 class FcmService {
@@ -39,8 +41,42 @@ class FcmService {
       },
     );
 
-    // 2. Start client-side Firestore listeners for alerts when authenticated
+    // 2. Register FCM token and listen for refreshes
+    _setupFcmTokenHandling();
+
+    // 3. FCM foreground message handler (app is open)
+    FirebaseMessaging.onMessage.listen((message) {
+      final alertId = message.data['alertId'];
+      if (alertId != null) {
+        _launchAlertOverlay(alertId);
+      }
+    });
+
+    // 4. FCM background-tap handler (user tapped notification while app in background)
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final alertId = message.data['alertId'];
+      if (alertId != null) {
+        _launchAlertOverlay(alertId);
+      }
+    });
+
+    // 5. Start client-side Firestore listeners for alerts when authenticated
     _setupClientSideListener();
+  }
+
+  void _setupFcmTokenHandling() async {
+    final authRepo = _ref.read(authRepositoryProvider);
+
+    // Fetch and store the current FCM token
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await authRepo.updateFcmToken(token);
+    }
+
+    // Listen for token refreshes
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await authRepo.updateFcmToken(newToken);
+    });
   }
 
   void _setupClientSideListener() {
@@ -75,10 +111,10 @@ class FcmService {
   }
 
   void _triggerIncomingAlert(AlertModel alert) async {
-    // 1. Mark as delivered in Firestore
+    // 1. Mark as delivered in Firestore (BUG 2 fix: was markSeen)
     await _ref
         .read(alertControllerProvider)
-        .markSeen(alert.alertId); // Mark seen/delivered
+        .markDelivered(alert.alertId);
 
     // 2. Trigger local notification
     await _showLocalNotification(

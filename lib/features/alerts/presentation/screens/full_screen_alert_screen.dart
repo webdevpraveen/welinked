@@ -45,8 +45,8 @@ class _FullScreenAlertScreenState extends ConsumerState<FullScreenAlertScreen> {
     final audioService = ref.read(audioServiceProvider);
     await audioService.playAlertAudio(widget.alert.alertType);
 
-    // Auto mark as delivered
-    ref.read(alertControllerProvider).markSeen(widget.alert.alertId);
+    // Mark alert as delivered when full screen overlay opens
+    ref.read(alertControllerProvider).markDelivered(widget.alert.alertId);
 
     // Start 10-second dismiss timer
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {

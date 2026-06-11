@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:welinked/features/location/presentation/providers/location_providers.dart';
 import 'package:welinked/features/status/presentation/providers/status_providers.dart';
 import 'package:welinked/core/utils/date_utils.dart';
 import 'package:welinked/shared/widgets/loading_widget.dart';
@@ -30,52 +31,59 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final partnerStatus = ref.watch(partnerStatusProvider);
-    final partner = partnerStatus.hasValue ? partnerStatus.value : null;
+
+    // BUG 12 fix: Use partnerLocationProvider for coordinates and timestamp.
+    // Use partnerStatusProvider only for the partner's name to avoid rebuilding
+    // the location screen on every status update (battery, online status etc.).
+    final locationAsync = ref.watch(partnerLocationProvider);
+    final partnerName = ref.watch(
+      partnerStatusProvider.select((s) => s.value?.name ?? 'Duo'),
+    );
 
     Widget body;
-    if (partner == null) {
-      if (partnerStatus.isLoading) {
+    final location = locationAsync.value;
+
+    if (location == null) {
+      if (locationAsync.isLoading) {
         body = const AppLoadingWidget(message: 'Locating Duo...');
+      } else if (locationAsync.hasError) {
+        body = const AppErrorWidget(message: 'Could not fetch Duo location.');
       } else {
-        body = const AppErrorWidget(message: 'Could not fetch Duo information.');
-      }
-    } else if (!partner.hasLocation) {
-      body = Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.location_off_rounded,
-                size: 64,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No Location Shared Yet',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.bold,
+        // No location data yet (null value, not loading, no error)
+        body = Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.location_off_rounded,
+                  size: 64,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "${partner.name}'s location has not been updated yet. Updates sync automatically in the background.",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                const SizedBox(height: 16),
+                Text(
+                  'No Location Shared Yet',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  "$partnerName's location has not been updated yet. Updates sync automatically in the background.",
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        );
+      }
     } else {
-      final lastUpdatedStr = partner.locationUpdatedAt != null
-          ? AppDateUtils.relativeTime(partner.locationUpdatedAt!)
-          : 'Unknown';
+      final lastUpdatedStr = AppDateUtils.relativeTime(location.timestamp);
 
       body = Padding(
         padding: const EdgeInsets.all(24.0),
@@ -108,7 +116,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      partner.name,
+                      partnerName,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -149,14 +157,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                     const Divider(height: 24),
                     _buildCoordinateRow(
                       label: 'Latitude',
-                      value: partner.latitude!.toStringAsFixed(6),
+                      value: location.latitude.toStringAsFixed(6),
                       icon: Icons.explore_outlined,
                       theme: theme,
                     ),
                     const SizedBox(height: 16),
                     _buildCoordinateRow(
                       label: 'Longitude',
-                      value: partner.longitude!.toStringAsFixed(6),
+                      value: location.longitude.toStringAsFixed(6),
                       icon: Icons.explore_rounded,
                       theme: theme,
                     ),
@@ -167,7 +175,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             const Spacer(),
             // Maps redirection action
             ElevatedButton.icon(
-              onPressed: () => _openGoogleMaps(partner.latitude!, partner.longitude!),
+              onPressed: () => _openGoogleMaps(location.latitude, location.longitude),
               icon: const Icon(Icons.map_rounded),
               label: const Text('Open in Google Maps'),
               style: ElevatedButton.styleFrom(
@@ -190,7 +198,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       body: Stack(
         children: [
           body,
-          if (partner != null && partnerStatus.isLoading)
+          if (location != null && locationAsync.isLoading)
             const Positioned(
               top: 0,
               left: 0,

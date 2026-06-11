@@ -68,7 +68,9 @@ class AlertHistoryScreen extends ConsumerWidget {
                       
                       // Auto-mark received alerts as seen when history is opened
                       if (alert.receiverUid == uid && alert.status == AlertStatus.delivered) {
-                        controller.markSeen(alert.alertId);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          controller.markSeen(alert.alertId);
+                        });
                       }
 
                       return AlertCard(

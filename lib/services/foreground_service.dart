@@ -44,6 +44,11 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
 
     _secondsPassed += 5; // Repeat interval is 5 seconds
 
+    // Reset counter after 1 hour to prevent integer overflow
+    if (_secondsPassed >= 3600) {
+      _secondsPassed = 0;
+    }
+
     // 1. Heartbeat check (every 1 minute)
     if (_secondsPassed % AppConstants.heartbeatIntervalSeconds == 0) {
       await _syncHeartbeat();

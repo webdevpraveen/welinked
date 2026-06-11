@@ -25,11 +25,11 @@ class AlertCooldownNotifier extends Notifier<Map<AlertType, DateTime>> {
       type: DateTime.now().add(duration),
     };
 
-    // Auto update state when timer completes
+    // Auto update state when timer completes — create new Map to avoid in-place mutation
     Timer(duration, () {
-      state = {
-        ...state,
-      }..remove(type);
+      final updated = Map<AlertType, DateTime>.from(state);
+      updated.remove(type);
+      state = updated;
     });
   }
 
@@ -86,6 +86,14 @@ class AlertController {
       await _repository.markAcknowledged(alertId);
     } catch (e) {
       // Background operation failure logging
+    }
+  }
+
+  Future<void> markDelivered(String alertId) async {
+    try {
+      await _repository.markDelivered(alertId);
+    } catch (e) {
+      // Silent error logging
     }
   }
 

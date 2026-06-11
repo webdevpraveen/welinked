@@ -8,15 +8,21 @@ class PermissionUtils {
 
   /// Requests all critical permissions needed for the app.
   /// Returns true if all essential permissions are granted.
+  /// Background location must be requested AFTER foreground location is granted.
   static Future<bool> requestAllPermissions() async {
-    final statuses = await [
+    // Step 1: Request notification and foreground location together
+    final step1 = await [
       Permission.notification,
       Permission.location,
-      Permission.locationAlways,
     ].request();
 
-    final notificationGranted = statuses[Permission.notification]?.isGranted ?? false;
-    final locationGranted = statuses[Permission.location]?.isGranted ?? false;
+    final notificationGranted = step1[Permission.notification]?.isGranted ?? false;
+    final locationGranted = step1[Permission.location]?.isGranted ?? false;
+
+    // Step 2: Only request background location if foreground location is granted
+    if (locationGranted) {
+      await Permission.locationAlways.request();
+    }
 
     return notificationGranted && locationGranted;
   }
