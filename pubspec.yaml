@@ -11,23 +11,23 @@ dependencies:
     sdk: flutter
 
   # Firebase
-  firebase_core: any
-  firebase_auth: any
-  cloud_firestore: any
-  firebase_messaging: any
+  firebase_core: ^4.10.0
+  firebase_auth: ^6.5.2
+  cloud_firestore: ^6.5.0
+  firebase_messaging: ^16.3.0
 
   # State Management
-  flutter_riverpod: any
+  flutter_riverpod: ^3.3.1
 
   # Navigation
-  go_router: any
+  go_router: ^17.3.0
 
   # Location
   geolocator: any
   url_launcher: ^6.3.0
 
   # Background Services
-  flutter_foreground_task: any
+  flutter_foreground_task: ^9.2.2
   workmanager: any
 
   # Device Info
@@ -36,7 +36,7 @@ dependencies:
   permission_handler: any
 
   # Alert UX
-  audioplayers: any
+  audioplayers: ^6.7.1
   wakelock_plus: any
   flutter_local_notifications: any
   vibration: any
