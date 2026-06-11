@@ -20,7 +20,7 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('WeLinked'),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -38,14 +38,14 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1.15,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
+              GridView.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.15,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
                     AlertButton(
                       type: AlertType.red,
                       onTap: () => alertController.sendAlert(
@@ -80,7 +80,6 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
             ],
           ),
         ),

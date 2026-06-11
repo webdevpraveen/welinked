@@ -33,6 +33,12 @@ class BackgroundUpdateTaskHandler extends TaskHandler {
           options: DefaultFirebaseOptions.currentPlatform,
         );
       }
+
+      if (_uid != null) {
+        // Initial sync so data populates quickly without waiting for the first repeat interval
+        await _syncDeviceStatus();
+        await _syncLocation(force: true);
+      }
     } catch (e) {
       // Firebase initialization in background isolate handled safely
     }

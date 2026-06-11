@@ -196,6 +196,7 @@ class FcmService {
       channelDescription: channelDescription,
       importance: Importance.max,
       priority: Priority.high,
+      fullScreenIntent: true,
       playSound: true,
     );
     final details = NotificationDetails(android: androidDetails);

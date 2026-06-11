@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:welinked/app.dart';
 import 'package:welinked/features/auth/presentation/providers/auth_providers.dart';
 import 'package:welinked/services/fcm_service.dart';
+import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:welinked/core/constants/app_constants.dart';
 import 'package:welinked/services/foreground_service.dart';
 import 'package:welinked/firebase_options.dart';
 
@@ -14,7 +17,34 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Handle background message if needed.
+  final alertId = message.data['alertId'];
+  if (alertId != null) {
+    final alertType = message.data['alertType']?.toString().toUpperCase() ?? 'ATTENTION';
+    final senderName = message.data['senderName'] ?? 'Duo';
+
+    final localNotifications = FlutterLocalNotificationsPlugin();
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    final initSettings = const InitializationSettings(android: androidSettings);
+    await localNotifications.initialize(settings: initSettings);
+
+    final androidDetails = AndroidNotificationDetails(
+      AppConstants.alertChannelId,
+      AppConstants.alertChannelName,
+      channelDescription: AppConstants.alertChannelDescription,
+      importance: Importance.max,
+      priority: Priority.high,
+      fullScreenIntent: true,
+      playSound: true,
+    );
+
+    await localNotifications.show(
+      id: alertId.hashCode,
+      title: '$alertType ALERT RECEIVED!',
+      body: '$senderName sent you an alert. Tap to view.',
+      notificationDetails: NotificationDetails(android: androidDetails),
+      payload: jsonEncode({'alertId': alertId}),
+    );
+  }
 }
 
 void main() async {
