@@ -40,6 +40,7 @@ dependencies:
   wakelock_plus: any
   flutter_local_notifications: any
   vibration: any
+  android_intent_plus: any
 
   # UI
   google_fonts: ^6.2.1

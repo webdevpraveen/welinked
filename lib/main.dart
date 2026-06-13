@@ -11,8 +11,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:welinked/core/constants/app_constants.dart';
 import 'package:welinked/services/foreground_service.dart';
 import 'package:welinked/firebase_options.dart';
+import 'dart:io';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -53,7 +55,27 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     // Force app to foreground (Truecaller-like popup)
     FlutterForegroundTask.wakeUpScreen();
-    FlutterForegroundTask.launchApp();
+    
+    if (Platform.isAndroid) {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        package: 'com.wdp.welinked',
+        componentName: 'com.wdp.welinked.MainActivity',
+        flags: <int>[
+          Flag.FLAG_ACTIVITY_NEW_TASK,
+          Flag.FLAG_ACTIVITY_SINGLE_TOP,
+          Flag.FLAG_ACTIVITY_CLEAR_TOP,
+        ],
+      );
+      try {
+        await intent.launch();
+      } catch (e) {
+        debugPrint('Failed to launch explicit intent: $e');
+        FlutterForegroundTask.launchApp();
+      }
+    } else {
+      FlutterForegroundTask.launchApp();
+    }
   }
 }
 
