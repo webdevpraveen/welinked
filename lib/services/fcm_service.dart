@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:welinked/core/constants/app_constants.dart';
 import 'package:welinked/core/constants/alert_constants.dart';
@@ -199,6 +200,8 @@ class FcmService {
       fullScreenIntent: true,
       playSound: true,
       category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      additionalFlags: Int32List.fromList(<int>[4]), // FLAG_INSISTENT
     );
     final details = NotificationDetails(android: androidDetails);
     await _localNotifications.show(

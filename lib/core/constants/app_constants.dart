@@ -15,7 +15,7 @@ class AppConstants {
   static const double locationMovementThresholdMeters = 50.0;
 
   // Notification channel IDs
-  static const String alertChannelId = 'welinked_alerts_v2';
+  static const String alertChannelId = 'welinked_alerts_v3';
   static const String alertChannelName = 'WeLinked Alerts';
   static const String alertChannelDescription =
       'High priority alert notifications from your duo';

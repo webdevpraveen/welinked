@@ -8,13 +8,14 @@ import 'package:welinked/features/auth/presentation/providers/auth_providers.dar
 import 'package:welinked/services/fcm_service.dart';
 import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:welinked/core/constants/app_constants.dart';
-import 'package:welinked/services/foreground_service.dart';
-import 'package:welinked/firebase_options.dart';
 import 'dart:io';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
+import 'package:welinked/core/constants/app_constants.dart';
+import 'package:welinked/services/foreground_service.dart';
+import 'package:welinked/firebase_options.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -39,6 +40,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       fullScreenIntent: true,
       playSound: true,
       category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      additionalFlags: Int32List.fromList(<int>[4]), // FLAG_INSISTENT
     );
 
     await localNotifications.show(
