@@ -61,19 +61,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     
     if (Platform.isAndroid) {
       final intent = AndroidIntent(
-        action: 'android.intent.action.MAIN',
+        action: 'com.wdp.welinked.ACTION_WAKE_ALARM',
         package: 'com.wdp.welinked',
-        componentName: 'com.wdp.welinked.MainActivity',
-        flags: <int>[
-          Flag.FLAG_ACTIVITY_NEW_TASK,
-          Flag.FLAG_ACTIVITY_SINGLE_TOP,
-          Flag.FLAG_ACTIVITY_CLEAR_TOP,
-        ],
       );
       try {
-        await intent.launch();
+        await intent.sendBroadcast();
       } catch (e) {
-        debugPrint('Failed to launch explicit intent: $e');
+        debugPrint('Failed to send broadcast intent: $e');
         FlutterForegroundTask.launchApp();
       }
     } else {
