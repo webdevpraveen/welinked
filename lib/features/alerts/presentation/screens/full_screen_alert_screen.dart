@@ -6,6 +6,7 @@ import 'package:welinked/features/alerts/domain/alert_model.dart';
 import 'package:welinked/features/alerts/presentation/providers/alert_providers.dart';
 import 'package:welinked/services/audio_service.dart';
 import 'package:welinked/services/wakelock_service.dart';
+import 'package:welinked/services/fcm_service.dart';
 import 'package:vibration/vibration.dart';
 
 class FullScreenAlertScreen extends ConsumerStatefulWidget {
@@ -68,13 +69,14 @@ class _FullScreenAlertScreenState extends ConsumerState<FullScreenAlertScreen> {
 
   void _dismissAlert() {
     _cleanup();
-    Navigator.of(context).pop();
+    SystemNavigator.pop();
   }
 
   void _cleanup() {
     _countdownTimer?.cancel();
     Vibration.cancel();
     ref.read(audioServiceProvider).stopAudio();
+    ref.read(fcmServiceProvider).cancelNotification(widget.alert.alertId.hashCode);
     WakeLockService.release();
   }
 

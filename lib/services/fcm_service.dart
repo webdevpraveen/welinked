@@ -194,6 +194,8 @@ class FcmService {
     required String channelName,
     required String channelDescription,
   }) async {
+    final isAlert = channelId == AppConstants.alertChannelId;
+
     final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
@@ -202,9 +204,9 @@ class FcmService {
       priority: Priority.high,
       fullScreenIntent: true,
       playSound: true,
-      category: AndroidNotificationCategory.alarm,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
-      additionalFlags: Int32List.fromList(<int>[4]), // FLAG_INSISTENT
+      category: isAlert ? AndroidNotificationCategory.alarm : AndroidNotificationCategory.msg,
+      audioAttributesUsage: isAlert ? AudioAttributesUsage.alarm : AudioAttributesUsage.notification,
+      additionalFlags: isAlert ? Int32List.fromList(<int>[4]) : null, // FLAG_INSISTENT
     );
     final details = NotificationDetails(android: androidDetails);
     await _localNotifications.show(
@@ -214,6 +216,10 @@ class FcmService {
       notificationDetails: details,
       payload: payload,
     );
+  }
+
+  Future<void> cancelNotification(int id) async {
+    await _localNotifications.cancel(id);
   }
 }
 
