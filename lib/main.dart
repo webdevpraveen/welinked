@@ -11,6 +11,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:welinked/core/constants/app_constants.dart';
 import 'package:welinked/services/foreground_service.dart';
 import 'package:welinked/firebase_options.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -35,6 +36,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       priority: Priority.high,
       fullScreenIntent: true,
       playSound: true,
+      category: AndroidNotificationCategory.alarm,
     );
 
     await localNotifications.show(
@@ -44,6 +46,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       notificationDetails: NotificationDetails(android: androidDetails),
       payload: jsonEncode({'alertId': alertId}),
     );
+
+    // Save alert ID to be handled when app opens
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pending_alert_id', alertId);
+
+    // Force app to foreground (Truecaller-like popup)
+    FlutterForegroundTask.wakeUpScreen();
+    FlutterForegroundTask.launchApp();
   }
 }
 
@@ -91,13 +101,18 @@ class _AppStartupWrapperState extends ConsumerState<AppStartupWrapper> {
     
     // Monitor user authentication transitions to handle background service activation/deactivation
     ref.listenManual(currentUserStreamProvider, (previous, next) {
-      final user = next.value;
-      if (user != null) {
-        // Start Background Foreground sync updates
-        ForegroundServiceManager.start(user.uid);
-      } else {
-        // Stop updates
-        ForegroundServiceManager.stop();
+      final prevUid = previous?.value?.uid;
+      final nextUid = next.value?.uid;
+      
+      // ONLY start/stop the service if the authentication state (UID) actually changed!
+      if (prevUid != nextUid) {
+        if (nextUid != null) {
+          // Start Background Foreground sync updates
+          ForegroundServiceManager.start(nextUid);
+        } else {
+          // Stop updates
+          ForegroundServiceManager.stop();
+        }
       }
     });
 
@@ -105,6 +120,16 @@ class _AppStartupWrapperState extends ConsumerState<AppStartupWrapper> {
     final initialUser = ref.read(currentUserStreamProvider).value;
     if (initialUser != null) {
       ForegroundServiceManager.start(initialUser.uid);
+    }
+
+    // Check for any pending alerts from background wakeups
+    final prefs = await SharedPreferences.getInstance();
+    final pendingAlertId = prefs.getString('pending_alert_id');
+    if (pendingAlertId != null) {
+      await prefs.remove('pending_alert_id');
+      Future.delayed(const Duration(milliseconds: 800), () {
+        fcmService.launchAlertOverlay(pendingAlertId);
+      });
     }
 
     if (mounted) {

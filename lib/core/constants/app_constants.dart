@@ -8,7 +8,7 @@ class AppConstants {
 
   // Background service intervals (in seconds)
   static const int locationSyncIntervalSeconds = 300; // 5 minutes
-  static const int statusSyncIntervalSeconds = 120; // 2 minutes
+  static const int statusSyncIntervalSeconds = 60; // 1 minute
   static const int heartbeatIntervalSeconds = 60; // 1 minute
 
   // Location thresholds

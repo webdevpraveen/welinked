@@ -48,7 +48,7 @@ class FcmService {
     FirebaseMessaging.onMessage.listen((message) {
       final alertId = message.data['alertId'];
       if (alertId != null) {
-        _launchAlertOverlay(alertId);
+        launchAlertOverlay(alertId);
       }
     });
 
@@ -56,7 +56,7 @@ class FcmService {
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       final alertId = message.data['alertId'];
       if (alertId != null) {
-        _launchAlertOverlay(alertId);
+        launchAlertOverlay(alertId);
       }
     });
 
@@ -128,7 +128,7 @@ class FcmService {
     );
 
     // 3. Launch full screen overlay immediately (if app context is available)
-    _launchAlertOverlay(alert.alertId);
+    launchAlertOverlay(alert.alertId);
   }
 
   void _triggerAcknowledgementNotification(AlertModel alert) async {
@@ -154,11 +154,11 @@ class FcmService {
   void _handleMessagePayload(Map<String, dynamic> data) {
     final alertId = data['alertId'];
     if (alertId != null) {
-      _launchAlertOverlay(alertId);
+      launchAlertOverlay(alertId);
     }
   }
 
-  void _launchAlertOverlay(String alertId) async {
+  void launchAlertOverlay(String alertId) async {
     final alert = await _ref.read(alertRepositoryProvider).getAlert(alertId);
     if (alert == null) return;
 
@@ -198,6 +198,7 @@ class FcmService {
       priority: Priority.high,
       fullScreenIntent: true,
       playSound: true,
+      category: AndroidNotificationCategory.alarm,
     );
     final details = NotificationDetails(android: androidDetails);
     await _localNotifications.show(
