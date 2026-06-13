@@ -173,9 +173,12 @@ class FcmService {
     final context = rootNavigatorKey.currentContext;
     if (context != null && context.mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(
+        PageRouteBuilder(
+          opaque: false,
           fullscreenDialog: true,
-          builder: (context) =>
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          pageBuilder: (context, animation, secondaryAnimation) =>
               FullScreenAlertScreen(alert: alert, senderName: senderName),
         ),
       );
