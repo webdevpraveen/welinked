@@ -49,6 +49,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       granted = await PermissionUtils.requestBackgroundLocationPermission();
     } else if (type == 'Battery Optimization') {
       granted = await PermissionUtils.requestIgnoreBatteryOptimizations();
+    } else if (type == 'Display Over Other Apps') {
+      granted = await PermissionUtils.requestSystemAlertWindow();
     }
 
     if (mounted) {

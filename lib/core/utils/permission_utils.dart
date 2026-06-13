@@ -24,6 +24,9 @@ class PermissionUtils {
       await Permission.locationAlways.request();
     }
 
+    // Step 3: Request System Alert Window (Display over other apps) for popups
+    await Permission.systemAlertWindow.request();
+
     return notificationGranted && locationGranted;
   }
 
@@ -67,6 +70,12 @@ class PermissionUtils {
     return status.isGranted;
   }
 
+  /// Request System Alert Window permission (Display over other apps).
+  static Future<bool> requestSystemAlertWindow() async {
+    final status = await Permission.systemAlertWindow.request();
+    return status.isGranted;
+  }
+
   /// Check if battery optimization is ignored.
   static Future<bool> isBatteryOptimizationIgnored() async {
     return await Permission.ignoreBatteryOptimizations.isGranted;
@@ -84,6 +93,7 @@ class PermissionUtils {
       'Location': await Permission.location.isGranted,
       'Background Location': await Permission.locationAlways.isGranted,
       'Battery Optimization': await Permission.ignoreBatteryOptimizations.isGranted,
+      'Display Over Other Apps': await Permission.systemAlertWindow.isGranted,
     };
   }
 
