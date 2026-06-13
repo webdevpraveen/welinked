@@ -32,5 +32,5 @@ class AppConstants {
 
   // App info
   static const String appName = 'WeLinked';
-  static const String appVersion = '1.0.1';
+  static const String appVersion = '1.0.2';
 }
