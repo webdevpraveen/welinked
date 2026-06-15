@@ -7,7 +7,7 @@ Follow this step-by-step guide to configure Firebase, wire up the Google Maps AP
 ## Step 1: Firebase Project Configuration
 
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project named **WeLinked**.
-2. Upgrade the project to the **Blaze (Pay-As-You-Go) plan**. (Required for deploying Node.js 18 Cloud Functions). The free tier limits are generous and should cost $0.00 for exactly 2 active users.
+2. Upgrade the project to the **Blaze plan**. (Required for deploying Node.js 18 Cloud Functions). The free tier limits are generous and should cost $0.00 for exactly 2 active users.
 3. Enable **Email/Password** provider inside **Firebase Authentication** console.
 4. Enable **Cloud Firestore** and choose a location close to your physical devices.
 5. Create an Android App in your Firebase project settings:
